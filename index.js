@@ -36,23 +36,27 @@ app.get('*', function(req, res, next){
 const port = 3000
 app.listen(port)
 
+const apiDocsFileName = 'apidocs.json';
 
 const manageAPIDocs = (route, type, description = null) => {
-    let rawdata = fs.readFileSync('apidocs.json');
-    let apiJSON = JSON.parse(rawdata); 
+    if (! fs.existsSync(apiDocsFileName)) {
+        fs.writeFileSync(apiDocsFileName, JSON.stringify({}));
+    }
+    let rawdata = fs.readFileSync(apiDocsFileName);
+    let apiJSON = JSON.parse(rawdata);
     // for adding new APIs in documentation.
     if (type === "add") {
         if(! (route in apiJSON)) {
             let newApiJSON = { ...apiJSON };
             newApiJSON[route] = "No information available for this API!";
-            fs.writeFileSync("apidocs.json", JSON.stringify(newApiJSON));
+            fs.writeFileSync(apiDocsFileName, JSON.stringify(newApiJSON));
         }
     }
     // for removing 404 APIs from documentation.
     if (type === "delete") {
         if((route in apiJSON)) {
             delete apiJSON[route]
-            fs.writeFileSync("apidocs.json", JSON.stringify(apiJSON));
+            fs.writeFileSync(apiDocsFileName, JSON.stringify(apiJSON));
         }
     }
     // list all APIs.
@@ -63,12 +67,13 @@ const manageAPIDocs = (route, type, description = null) => {
     if(type === "explain") {
         const apiList = route.split(',');
         apiList.forEach(api => {
-            console.log(`${api} :  ${apiJSON[api] ? apiJSON[api] : "No such API available!"}`);
+            console.log(`${api} :  ${apiJSON[api] ? apiJSON[api] : "No information available for this API!"}`);
         });
     }
 }
 
 module.exports = {
     manageAPIDocs,
-    port
+    port,
+    apiDocsFileName
 }
